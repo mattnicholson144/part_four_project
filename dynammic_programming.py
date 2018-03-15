@@ -8,6 +8,11 @@ Dynamic Programming for Strategy
 """
 #Import Appropriate libraries
 
+#Create grid
+n = 4
+m = 5
+grid = [[[y,x] for x in range(m)] for y in range(n)] 
+
 #Create Manhattan Function
 
 #Create value function
