@@ -1,3 +1,7 @@
+"""
+GUI
+"""
+
 import pygame
 import numpy as np
  
@@ -14,8 +18,7 @@ point_height = 5
 
 # Margin between each grid point
 grid_margin = 100
- 
- 
+
 class GridPoint(pygame.sprite.Sprite):
     # Constructor 
     def __init__(self, x, y):
