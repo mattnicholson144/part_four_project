@@ -72,14 +72,13 @@ class Player():
         self.x = x
         self.y = y
 
-#p1 = Player()
+p1 = Player(coords[3][0], coords[3][1])
+p2 = Player(coords[7][0], coords[7][1])
 
 # Draw points and players on screen
 allpointslist.draw(screen)
-print([coords[7]])
-print([coords[0]])
-pygame.draw.circle(screen, GREEN, coords[7], 10)
-pygame.draw.circle(screen, RED, coords[3], 10)
+pygame.draw.circle(screen, GREEN, (int(p1.x + np.floor(point_width / 2)), int(p1.y + np.floor(point_height / 2))), 10)
+pygame.draw.circle(screen, RED, (int(p2.x + np.floor(point_width / 2)), int(p2.y + np.floor(point_height / 2))), 10)
 
 # Update display
 pygame.display.update()
@@ -104,8 +103,30 @@ while not complete:
     screen.blit(textsurface, (100, 100))
     pygame.display.update()
     
+    
+    ######################## need to do this off indices, not coords somehow
     # Player 1 turn
     availablemoves = []
+    try:
+        availablemoves.append(coords[p1.x - 1][p1.y])
+    except:
+        print(p1.x - 1, p1.y)
+    try:
+        availablemoves.append(coords[p1.x + 1][p1.y])
+    except:
+        print('nope')
+    try:
+        availablemoves.append(coords[p1.x][p1.y - npoints_x])
+    except:
+        print('nope')
+    try:
+        availablemoves.append(coords[p1.x][p1.y + npoints_x])
+    except:
+        print('nope')
+    
+    print(availablemoves)
+    # don't forget to delete availablemoves
+    
     
     
     while player1_turn:
