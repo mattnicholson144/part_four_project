@@ -66,30 +66,37 @@ for i in range(npoints_y):
         coords.append((x, y))
 
 class Player():
-    def __init__(self, x, y, element):
+    def __init__(self, x, y, element, colour, radius):
         self.x = x
         self.y = y
         self.element = element
+        self.colour = colour
+        self.radius = radius
         self.turn = False
         
     def availableMoves(self, nx, ny, coords, screen, display):
         available_moves = []
+        element = []
         
         # Left (must be same row)
         if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx)):
             available_moves.append(coords[self.element - 1])
+            element.append(self.element - 1)
         
         # Right (must be same row)
         if (np.floor((self.element + 1) / nx) == np.floor(self.element / nx)):
             available_moves.append(coords[self.element + 1])
+            element.append(self.element + 1)
         
         # Above (must not be bottom row)
         if (self.element - nx >= 0):
             available_moves.append(coords[self.element - nx])
+            element.append(self.element - nx)
         
         # Below (must not be top row)
         if (self.element + nx <= nx * ny - 1):
             available_moves.append(coords[self.element + nx])
+            element.append(self.element + nx)
         
         
         # Add available moves to list (and to override)
@@ -105,19 +112,43 @@ class Player():
         available_points.draw(screen)
         display.update()
         
-        return points_override
+        return available_moves, element, points_override
     
-    def move(self, points, screen, display):
+    def move(self, moves, elements, points, screen, display):
+        
+        # Override old position
+        old_grid_point = GridPoint(self.x, self.y, GREY)
+        old_x = self.x
+        old_y = self.y
+        old_position = pygame.sprite.Group()
+        old_position.add(old_grid_point)
+        
+        # Choose next move from available moves
+        move_index = 0
+        chosen_move = moves[move_index]
+        
+        # Update player position based on move
+        self.x = chosen_move[0]
+        self.y = chosen_move[1]
+        self.element = elements[move_index]
+        
+        # Override grid points back to normal colour and old player position
+        pygame.draw.circle(screen, BLACK, (old_x, old_y), self.radius)
+        old_position.draw(screen)
+        
         points.draw(screen)
+        pygame.draw.circle(screen, self.colour, (self.x, self.y), self.radius)
+        
+        # Update display
         display.update()
 
-p1 = Player(coords[3][0], coords[3][1], 3)
-p2 = Player(coords[7][0], coords[7][1], 7)
+p1 = Player(coords[3][0], coords[3][1], 3, RED, 10)
+p2 = Player(coords[7][0], coords[7][1], 7, BLUE, 10)
 
 # Draw points and players on screen
 allpointslist.draw(screen)
-pygame.draw.circle(screen, RED, (p1.x, p1.y), 10)
-pygame.draw.circle(screen, BLUE, (p2.x, p2.y), 10)
+pygame.draw.circle(screen, p1.colour, (p1.x, p1.y), p1.radius)
+pygame.draw.circle(screen, p2.colour, (p2.x, p2.y), p2.radius)
 pygame.display.update()
 
 # Initialise turns
@@ -139,12 +170,12 @@ while not game_complete:
     while p1.Turn:
         
         # Show available moves
-        base_grid_points = p1.availableMoves(npoints_x, npoints_y, coords, screen, pygame.display)
+        possible_moves, move_element, base_grid_points = p1.availableMoves(npoints_x, npoints_y, coords, screen, pygame.display)
         
         # When user click is within area of available move, perform move
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:        # MOUSEBUTTONDOWN for clicking
-                p1.move(base_grid_points, screen, pygame.display)
+                p1.move(possible_moves, move_element, base_grid_points, screen, pygame.display)
                 p1.Turn = False
                 p2.Turn = True
     
@@ -152,12 +183,12 @@ while not game_complete:
     while p2.Turn:
         
         # Show available moves
-        base_grid_points = p2.availableMoves(npoints_x, npoints_y, coords, screen, pygame.display)
+        possible_moves, move_element, base_grid_points = p2.availableMoves(npoints_x, npoints_y, coords, screen, pygame.display)
         
         # When user click is within area of available move, perform move
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                p2.move(base_grid_points, screen, pygame.display)
+                p2.move(possible_moves, move_element, base_grid_points, screen, pygame.display)
                 p2.Turn = False
                 p1.Turn = True
     
