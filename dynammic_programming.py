@@ -21,6 +21,20 @@ def manhattan_dist(i,j):
     #add complexity with triangular regio later
     return i
 
+def possible_moves_player(i,j,k,l):
+    #i, j, k, l are the game state for the current turn
+    #I, J, are the game state from the previous turn for the moving player
+    #Force players to move
+    #No 180s 
+    #No moving on top of each other
+    movestates = list([])
+    if (i!=k and j!= l)
+    
+    
+    return
+
+
+
 
 #Create value function
 def value_function(i, j, k, l, depth, iORk):
@@ -115,7 +129,7 @@ j = 1
 k = 2
 l = 3
 gamestate = [i,j,k,l]
-turns = 3
+turns = 6
 iORk = 1
 
 score, gamestate = game_function(gamestate, turns, iORk)
