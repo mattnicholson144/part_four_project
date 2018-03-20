@@ -11,16 +11,15 @@ import pandas as pd
 import matplotlib as plt
 
 def initialise_policy_table(turns, n, m):
+    print(turns)
     #initialise table
-    possible_states = n*n*m*m
-    policy_table = np.array(shape = (turns, n, m, n, m))
+    policy_table = np.zeros(shape = (turns, n, m, n, m))
     
-    t = 0
     for i in range(n):
         for j in range(m):
             for k in range(n):
                 for l in range(m):
-                     policy_table[t][i][j][k][l]=manhattan_dist(i,j) - manhattan_dist(k,l)
+                     policy_table[0][i][j][k][l]=manhattan_dist(i,j) - manhattan_dist(k,l)
 
     return policy_table
 
@@ -104,7 +103,7 @@ def populate_policy_table(policy_table, turns, n, m):
             for j in range(m):
                 for k in range(n):
                     for l in range(m):
-                         policy_table[t][i][j][k][l]=max
+                         policy_table[t][i][j][k][l]=
 
     return policy_table
     
@@ -131,14 +130,6 @@ def populate_policy_table(policy_table, turns, n, m):
 
 #possible_moves_p1 = possible_moves_player(i,j,k,l, I, J,K, L, iORk, n, m)
 #print(possible_moves_p1)
-
-endstate = [0,1,0,3]
-count = 0
-for i in range(4):
-    for j in range(5):
-        for k in range(4):
-            for l in range(5):
-                count = count + 1
-
-
+policy_table = initialise_policy_table(4, 4, 5)
+print(policy_table[0])
 
