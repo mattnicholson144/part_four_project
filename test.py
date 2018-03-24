@@ -4,7 +4,9 @@ GUI
 
 import pygame
 import numpy as np
+from policy import Policy
 
+# ==========================================================================================
 # Main GUI Class
 class GUI():
     
@@ -22,6 +24,8 @@ class GUI():
     point_height = 5
     screen_height = 900
     screen_width = 1600
+    
+    policy = Policy()
     
     # Constructor
     def __init__(self, npoints_x, npoints_y, grid_margin, max_turns):
@@ -52,6 +56,7 @@ class GUI():
             self.colour = colour
             self.radius = radius
             self.turn = False
+            self.policy = False
              
         def availableMoves(self, nx, ny, coords, screen, display, other_player):
             available_moves = []
@@ -119,32 +124,67 @@ class GUI():
             
         def haveTurn(self, other_player, npoints_x, npoints_y, coords, screen, screen_colour, display):
             
-            #Show available moves
+            # Show available moves
             possible_moves, move_element, base_grid_points = self.availableMoves(npoints_x, npoints_y, coords, screen, display, other_player)
-         
-            # When user click is within area of available move, perform move
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                     
-                    # Coordinates of mouse click
-                    x_click = pygame.mouse.get_pos()[0]
-                    y_click = pygame.mouse.get_pos()[1]
-                     
-                    # Check if mouse click near any possible moves
-                    index = -1
-                    for i in range(len(possible_moves)):
-                        if (np.abs(x_click - possible_moves[i][0]) < 3 * GUI.point_width) and (np.abs(y_click - possible_moves[i][1]) < 3 * GUI.point_height):
-                            index = i
-                            # Click can not be near to any other possible move
-                            break
-                     
-                    # Move player to selected position (if a position has been selected)
-                    if (index != -1):
-                        self.move(possible_moves[index], move_element[index], base_grid_points, screen, screen_colour, display)
-                     
-                        # End turn
-                        self.Turn = False
-                        other_player.Turn = True
+            
+            # If not a player
+            if self.policy:
+                
+                # Show possible moves before moving (delay in milliseconds)
+                if not other_player.policy:
+                    pygame.time.delay(2500)
+                
+                # Array of possible next move coordinates
+                i_next = []
+                j_next = []
+                for i in range(len(possible_moves)):
+                    i_next.append(possible_moves[i][0])
+                    j_next.append(possible_moves[i][1])
+                
+                # Other players' current coordinates
+                k = other_player.x
+                l = other_player.y
+                
+                # Store other player's coordinates in a list
+                GUI.policy.i_history.append(other_player.x)
+                GUI.policy.j_history.append(other_player.y)
+                
+                # Implement policy
+                element = GUI.policy.valueFunction(i_next, j_next, k, l)
+                
+                # Move based on policy's decision
+                self.move(possible_moves[element], move_element[element], base_grid_points, screen, screen_colour, display)
+                         
+                # End turn
+                self.Turn = False
+                other_player.Turn = True
+                
+            # If a player
+            else:
+                
+                # When user click is within area of available move, perform move
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                         
+                        # Coordinates of mouse click
+                        x_click = pygame.mouse.get_pos()[0]
+                        y_click = pygame.mouse.get_pos()[1]
+                         
+                        # Check if mouse click near any possible moves
+                        index = -1
+                        for i in range(len(possible_moves)):
+                            if (np.abs(x_click - possible_moves[i][0]) < 3 * GUI.point_width) and (np.abs(y_click - possible_moves[i][1]) < 3 * GUI.point_height):
+                                index = i
+                                # Click can not be near to any other possible move
+                                break
+                         
+                        # Move player to selected position (if a position has been selected)
+                        if (index != -1):
+                            self.move(possible_moves[index], move_element[index], base_grid_points, screen, screen_colour, display)
+                         
+                            # End turn
+                            self.Turn = False
+                            other_player.Turn = True
     
     # Create GUI
     def createAndShowGUI(self):
@@ -196,6 +236,12 @@ class GUI():
         self.game_complete = False
         self.p1.Turn = True
         
+        
+        
+        self.p2.policy = True #===================== somehow get this from user option
+        
+        
+        
         while not self.game_complete:
             
             # Player 1's turn
@@ -210,7 +256,7 @@ class GUI():
             self.current_turn -= 1
      
             # Display new turns remaining (MAKE THIS A METHOD)
-            self.screen.fill(self.screen_colour, (100, 100, 175, self.font_size))
+            self.screen.fill(self.screen_colour, (100, 100, 185, self.font_size))
             self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
             self.screen.blit(self.text_surface, (100, 100))
             pygame.display.update()
@@ -227,9 +273,13 @@ class GUI():
         
         # Exit simulator (HAVE AN END GAME SCREEN)
         pygame.quit()
-
+# ==========================================================================================
 
 
 # Create GUI object
-gameGUI = GUI(11, 7, 100, 3) # xpoints, ypoints, pointmargin, maxturns
+gameGUI = GUI(11, 7, 100, 10) # xpoints, ypoints, pointmargin, maxturns
 gameGUI.execute()
+
+# Testing
+# in playGame(), self.p2.policy = True
+# in GUI, Policy is an object
