@@ -16,7 +16,8 @@ class GUI():
     GREY = (95, 95, 95)
     BLACK = (0, 0, 0)
     RED = (255, 63, 63)
-    GREEN = (15, 243, 15)
+    LIGHT_GREEN = (63, 243, 63)
+    GREEN = (63, 223, 63)
     BLUE = (0, 127, 255)
     YELLOW = (223, 223, 31)
     
@@ -87,7 +88,7 @@ class GUI():
             available_points = pygame.sprite.Group()
             points_override = pygame.sprite.Group()
             for i in range(len(available_moves)):
-                point = GUI.GridPoint(available_moves[i][0], available_moves[i][1], GUI.GREEN)
+                point = GUI.GridPoint(available_moves[i][0], available_moves[i][1], GUI.LIGHT_GREEN)
                 available_points.add(point)
                 point = GUI.GridPoint(available_moves[i][0], available_moves[i][1], GUI.GREY)
                 points_override.add(point)
@@ -131,8 +132,7 @@ class GUI():
             if self.policy:
                 
                 # Show possible moves before moving (delay in milliseconds)
-                if not other_player.policy:
-                    pygame.time.delay(2500)
+                pygame.time.delay(1500)
                 
                 # Array of possible next move coordinates
                 i_next = []
@@ -214,20 +214,98 @@ class GUI():
                 self.all_grid_points.add(point)
                 self.coords.append((x, y))
         
-        # Initialise players
-        self.p1 = GUI.Player(self.coords[3][0], self.coords[3][1], 3, GUI.RED, 10)
-        self.p2 = GUI.Player(self.coords[7][0], self.coords[7][1], 7, GUI.BLUE, 10)
+        # Draw grid points on screen
+        self.all_grid_points.draw(self.screen)
+        pygame.display.update()
+    
+    def initialiseGameMode(self):
+        
+        # Game mode text surfaces
+        game_mode_text_surface = self.my_font.render('Select game mode', True, GUI.BLACK)
+        mode_text_surfaces = []
+        mode_text_surfaces.append(self.my_font.render('Person vs. Person', True, GUI.LIGHT_GREY))
+        mode_text_surfaces.append(self.my_font.render('Person vs. Policy', True, GUI.LIGHT_GREY))
+        mode_text_surfaces.append(self.my_font.render('Policy vs. Policy', True, GUI.LIGHT_GREY))
+        
+        # Button positions (xpos, ypos, width, height)
+        buttons = []
+        increment = 50
+        for i in range(len(mode_text_surfaces)):
+            buttons.append((50, 300 + i * increment, mode_text_surfaces[i].get_size()[0], mode_text_surfaces[i].get_size()[1]))
+        
+        # Game mode backgrounds
+        button_backgrounds = []
+        colour_list = [GUI.RED, GUI.BLUE, GUI.GREEN]
+        for i in range(len(buttons)):
+            button_backgrounds.append(pygame.Surface((buttons[i][2], buttons[i][3])))
+            button_backgrounds[i].fill(colour_list[i])
+        
+        # Draw background and text surfaces
+        self.screen.blit(game_mode_text_surface, (50, 250))
+        for i in range(len(buttons)):
+            self.screen.blit(button_backgrounds[i], (buttons[i][0], buttons[i][1]))
+            self.screen.blit(mode_text_surfaces[i], (buttons[i][0], buttons[i][1]))
+        pygame.display.update()
+        
+        # Wait until a game mode has been selected
+        game_mode = False
+        while not game_mode:
+            
+            # When user click is within area of button, select game mode
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                     
+                    # Coordinates of mouse click
+                    x_click = pygame.mouse.get_pos()[0]
+                    y_click = pygame.mouse.get_pos()[1]
+                     
+                    # Check if mouse click inside any game mode button
+                    index = -1
+                    for i in range(len(buttons)):
+                        if (x_click >= buttons[i][0] and x_click <= buttons[i][0] + buttons[i][2] - 1 and y_click >= buttons[i][1] and y_click <= buttons[i][1] + buttons[i][3] - 1):
+                            index = i
+                            game_mode = True
+                            # Click can not be within any other button
+                            break
+                     
+                    # Select game mode (if a game mode has been selected)
+                    if (index != -1):
+                        
+                        # Initialise players
+                        p1_pos = int((4.0 / 11.0) * self.npoints_x - 1)
+                        p2_pos = self.npoints_x - p1_pos - 1
+                        self.p1 = GUI.Player(self.coords[p1_pos][0], self.coords[p1_pos][1], p1_pos, GUI.RED, 10)
+                        self.p2 = GUI.Player(self.coords[p2_pos][0], self.coords[p2_pos][1], p2_pos, GUI.BLUE, 10)
+                        
+                        # Person vs. Policy
+                        if (index == 1):
+                            self.p2.policy = True
+                        
+                        # Policy vs. Policy
+                        if (index == 2):
+                            self.p1.policy = True
+                            self.p2.policy = True
+        
+        # Remove game mode text and buttons
+        game_mode_text_surface.fill(self.screen_colour)
+        self.screen.blit(game_mode_text_surface, (50, 250))
+        
+        for i in range(len(buttons)):
+            button_backgrounds[i].fill(self.screen_colour)
+            self.screen.blit(button_backgrounds[i], (buttons[i][0], buttons[i][1]))
+        pygame.display.update()
         
         # Show turns remaining
         self.current_turn = self.max_turns
         self.turn_text_colour = GUI.BLACK
         self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
         
-        # Draw objects on screen
-        self.all_grid_points.draw(self.screen)
+        # Draw players and turns remaining on screen
         pygame.draw.circle(self.screen, self.p1.colour, (self.p1.x, self.p1.y), self.p1.radius)
         pygame.draw.circle(self.screen, self.p2.colour, (self.p2.x, self.p2.y), self.p2.radius)
-        self.screen.blit(self.text_surface, (100, 100))
+        self.text_x = 50
+        self.text_y = 150
+        self.screen.blit(self.text_surface, (self.text_x, self.text_y))
         pygame.display.update()
         
     def playGame(self):
@@ -235,12 +313,6 @@ class GUI():
         # Play game until complete
         self.game_complete = False
         self.p1.Turn = True
-        
-        
-        
-        self.p2.policy = True #===================== somehow get this from user option
-        
-        
         
         while not self.game_complete:
             
@@ -256,9 +328,9 @@ class GUI():
             self.current_turn -= 1
      
             # Display new turns remaining (MAKE THIS A METHOD)
-            self.screen.fill(self.screen_colour, (100, 100, 185, self.font_size))
+            self.screen.fill(self.screen_colour, (self.text_x, self.text_y, self.text_surface.get_size()[0], self.font_size))
             self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
-            self.screen.blit(self.text_surface, (100, 100))
+            self.screen.blit(self.text_surface, (self.text_x, self.text_y))
             pygame.display.update()
                          
             # If no turns remaining, end game
@@ -269,6 +341,7 @@ class GUI():
         
         # Execute game methods in order
         self.createAndShowGUI()
+        self.initialiseGameMode()
         self.playGame()
         
         # Exit simulator (HAVE AN END GAME SCREEN)
@@ -276,10 +349,16 @@ class GUI():
 # ==========================================================================================
 
 
+
+
+
+
+
+
+
+
 # Create GUI object
-gameGUI = GUI(11, 7, 100, 10) # xpoints, ypoints, pointmargin, maxturns
+gameGUI = GUI(11, 7, 100, 5) # xpoints, ypoints, pointmargin, maxturns
 gameGUI.execute()
 
-# Testing
-# in playGame(), self.p2.policy = True
-# in GUI, Policy is an object
+# NOTE: for policy testing, Policy is a class attribute of GUI
