@@ -170,13 +170,13 @@ class GUI():
             for j in range(self.npoints_x):
                 x = int(j * self.grid_margin + GUI.screen_width / 2 - np.floor(self.npoints_x / 2) * self.grid_margin)
                 y = int(i * self.grid_margin + GUI.screen_height / 2 - np.floor(self.npoints_y / 2) * self.grid_margin)
-                point = self.__class__.GridPoint(x, y, GUI.GREY)
+                point = GUI.GridPoint(x, y, GUI.GREY)
                 self.all_grid_points.add(point)
                 self.coords.append((x, y))
         
         # Initialise players
-        self.p1 = self.__class__.Player(self.coords[3][0], self.coords[3][1], 3, GUI.RED, 10)
-        self.p2 = self.__class__.Player(self.coords[7][0], self.coords[7][1], 7, GUI.BLUE, 10)
+        self.p1 = GUI.Player(self.coords[3][0], self.coords[3][1], 3, GUI.RED, 10)
+        self.p2 = GUI.Player(self.coords[7][0], self.coords[7][1], 7, GUI.BLUE, 10)
         
         # Show turns remaining
         self.current_turn = self.max_turns
@@ -209,7 +209,7 @@ class GUI():
             #Number of turns remaining decrements
             self.current_turn -= 1
      
-            # Display new turns remaining (MAKE THIS A FUNCTION)
+            # Display new turns remaining (MAKE THIS A METHOD)
             self.screen.fill(self.screen_colour, (100, 100, 175, self.font_size))
             self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
             self.screen.blit(self.text_surface, (100, 100))
@@ -219,12 +219,17 @@ class GUI():
             if (self.current_turn == 0):
                 self.game_complete = True
          
+    def execute(self):
+        
+        # Execute game methods in order
+        self.createAndShowGUI()
+        self.playGame()
+        
         # Exit simulator (HAVE AN END GAME SCREEN)
         pygame.quit()
 
 
 
-# Create GUI object (xpoints, ypoints, pointmargin, maxturns)
-gameGUI = GUI(11, 7, 100, 3)
-gameGUI.createAndShowGUI()
-gameGUI.playGame()
+# Create GUI object
+gameGUI = GUI(11, 7, 100, 3) # xpoints, ypoints, pointmargin, maxturns
+gameGUI.execute()
