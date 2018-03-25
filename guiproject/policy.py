@@ -1,6 +1,6 @@
 import numpy as np
 class Policy():
-    def __init__(self, ):
+    def __init__(self):
         self.i_history = []
         self.j_history = []
     
