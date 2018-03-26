@@ -4,7 +4,11 @@ GUI
 
 import pygame
 import numpy as np
+<<<<<<< HEAD
 from dp_policy import Policy
+=======
+from policy import Policy
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
 
 # ==========================================================================================
 # Main GUI Class
@@ -26,6 +30,11 @@ class GUI():
     screen_height = 900
     screen_width = 1600
     
+<<<<<<< HEAD
+=======
+    policy = Policy()
+    
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
     # Constructor
     def __init__(self, npoints_x, npoints_y, grid_margin, max_turns):
         
@@ -34,7 +43,10 @@ class GUI():
         self.npoints_y = npoints_y
         self.grid_margin = grid_margin
         self.max_turns = max_turns
+<<<<<<< HEAD
         self.policy = Policy()
+=======
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
         
     # Grid points
     class GridPoint(pygame.sprite.Sprite):
@@ -57,12 +69,16 @@ class GUI():
             self.radius = radius
             self.turn = False
             self.policy = False
+<<<<<<< HEAD
             self.turn_history = []
+=======
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
              
         def availableMoves(self, nx, ny, coords, screen, display, other_player):
             available_moves = []
             element = []
             
+<<<<<<< HEAD
             # Left (must be same row and other player must not be there and this player can't have been there last move)
             if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx) and 
                     coords[self.element - 1] != (other_player.x, other_player.y) and
@@ -91,6 +107,29 @@ class GUI():
                 available_moves.append(coords[self.element + nx])
                 element.append(self.element + nx)
              
+=======
+            # Left (must be same row and other player must not be there)
+            if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx) and coords[self.element - 1] != (other_player.x, other_player.y)):
+                available_moves.append(coords[self.element - 1])
+                element.append(self.element - 1)
+             
+            # Right (must be same row and other player must not be there)
+            if (np.floor((self.element + 1) / nx) == np.floor(self.element / nx) and coords[self.element + 1] != (other_player.x, other_player.y)):
+                available_moves.append(coords[self.element + 1])
+                element.append(self.element + 1)
+             
+            # Above (must not be bottom row and other player must not be there)
+            if (self.element - nx >= 0 and coords[self.element - nx] != (other_player.x, other_player.y)):
+                available_moves.append(coords[self.element - nx])
+                element.append(self.element - nx)
+             
+            # Below (must not be top row and other player must not be there)
+            if (self.element + nx <= nx * ny - 1 and coords[self.element + nx] != (other_player.x, other_player.y)):
+                available_moves.append(coords[self.element + nx])
+                element.append(self.element + nx)
+             
+             
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
             # Add available moves to list (and to override)
             available_points = pygame.sprite.Group()
             points_override = pygame.sprite.Group()
@@ -130,7 +169,11 @@ class GUI():
             # Update display
             display.update()
             
+<<<<<<< HEAD
         def haveTurn(self, other_player, policy_table, current_turn, npoints_x, npoints_y, grid_margin, coords, screen, screen_colour, display):
+=======
+        def haveTurn(self, other_player, npoints_x, npoints_y, coords, screen, screen_colour, display):
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
             
             # Show available moves
             possible_moves, move_element, base_grid_points = self.availableMoves(npoints_x, npoints_y, coords, screen, display, other_player)
@@ -139,6 +182,7 @@ class GUI():
             if self.policy:
                 
                 # Show possible moves before moving (delay in milliseconds)
+<<<<<<< HEAD
                 pygame.time.delay(1000)
                 
                 # Normalise coordinates
@@ -204,6 +248,31 @@ class GUI():
                     # Move based on maximum policy value
                     self.move(possible_moves[element], move_element[element], base_grid_points, screen, screen_colour, display)
                 
+=======
+                pygame.time.delay(1500)
+                
+                # Array of possible next move coordinates
+                i_next = []
+                j_next = []
+                for i in range(len(possible_moves)):
+                    i_next.append(possible_moves[i][0])
+                    j_next.append(possible_moves[i][1])
+                
+                # Other players' current coordinates
+                k = other_player.x
+                l = other_player.y
+                
+                # Store other player's coordinates in a list
+                GUI.policy.i_history.append(other_player.x)
+                GUI.policy.j_history.append(other_player.y)
+                
+                # Implement policy
+                element = GUI.policy.valueFunction(i_next, j_next, k, l)
+                
+                # Move based on policy's decision
+                self.move(possible_moves[element], move_element[element], base_grid_points, screen, screen_colour, display)
+                         
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
                 # End turn
                 self.Turn = False
                 other_player.Turn = True
@@ -238,10 +307,13 @@ class GUI():
     # Create GUI
     def createAndShowGUI(self):
         
+<<<<<<< HEAD
         # Initialise and populate policy table
         self.policy.table = self.policy.initialise_policy_table(self.max_turns * 2, self.npoints_y, self.npoints_x)
         self.policy.table = self.policy.populate_policy_table(self.policy.table, self.max_turns * 2, self.npoints_y, self.npoints_x)
         
+=======
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
         # Initialise 'Pygame'
         pygame.init()
         self.screen = pygame.display.set_mode([GUI.screen_width, GUI.screen_height])
@@ -327,6 +399,7 @@ class GUI():
                         # Initialise players
                         p1_pos = int((4.0 / 11.0) * self.npoints_x - 1)
                         p2_pos = self.npoints_x - p1_pos - 1
+<<<<<<< HEAD
                         #self.p1 = GUI.Player(self.coords[p1_pos][0], self.coords[p1_pos][1], p1_pos, GUI.RED, 10)
                         self.p1 = GUI.Player(self.coords[34][0], self.coords[34][1], 34, GUI.RED, 20)
                         self.p1.player1 = True
@@ -335,6 +408,10 @@ class GUI():
                         self.p2 = GUI.Player(self.coords[24][0], self.coords[24][1], 24, GUI.BLUE, 20)
                         self.p2.player1 = False
                         self.p2.turn_history.append((self.p2.x, self.p2.y))
+=======
+                        self.p1 = GUI.Player(self.coords[p1_pos][0], self.coords[p1_pos][1], p1_pos, GUI.RED, 10)
+                        self.p2 = GUI.Player(self.coords[p2_pos][0], self.coords[p2_pos][1], p2_pos, GUI.BLUE, 10)
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
                         
                         # Person vs. Policy
                         if (index == 1):
@@ -377,11 +454,19 @@ class GUI():
             
             # Player 1's turn
             while self.p1.Turn:
+<<<<<<< HEAD
                 self.p1.haveTurn(self.p2, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin, self.coords, self.screen, self.screen_colour, pygame.display)
                 
             # Player 2's turn
             while self.p2.Turn:
                 self.p2.haveTurn(self.p1, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin, self.coords, self.screen, self.screen_colour, pygame.display)
+=======
+                self.p1.haveTurn(self.p2, self.npoints_x, self.npoints_y, self.coords, self.screen, self.screen_colour, pygame.display)
+                
+            # Player 2's turn
+            while self.p2.Turn:
+                self.p2.haveTurn(self.p1, self.npoints_x, self.npoints_y, self.coords, self.screen, self.screen_colour, pygame.display)
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
             
             #Number of turns remaining decrements
             self.current_turn -= 1
@@ -417,6 +502,7 @@ class GUI():
 
 
 # Create GUI object
+<<<<<<< HEAD
 gameGUI = GUI(11, 7, 100, 4) # xpoints, ypoints, pointmargin, maxturns
 gameGUI.execute()
 
@@ -425,3 +511,9 @@ gameGUI.execute()
 #test.policy.table = self.policy.initialise_policy_table(6, 7, 11)
 #test.policy.table = self.policy.populate_policy_table(test.policy.table, 6, 7, 11)
 
+=======
+gameGUI = GUI(11, 7, 100, 5) # xpoints, ypoints, pointmargin, maxturns
+gameGUI.execute()
+
+# NOTE: for policy testing, Policy is a class attribute of GUI
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62

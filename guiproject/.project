@@ -16,11 +16,14 @@
 	</natures>
 	<linkedResources>
 		<link>
+<<<<<<< HEAD
 			<name>dp_policy.py</name>
 			<type>1</type>
 			<location>C:/ANDY/Documents/GitHub/part_four_project/dp_policy.py</location>
 		</link>
 		<link>
+=======
+>>>>>>> 8c0937fcf20deb78fc716b1933939e40315fed62
 			<name>test.py</name>
 			<type>1</type>
 			<location>C:/ANDY/Documents/GitHub/part_four_project/test.py</location>
