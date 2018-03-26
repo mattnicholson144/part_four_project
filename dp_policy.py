@@ -12,8 +12,9 @@ import matplotlib as plt
 
 class Policy():
     def __init__(self):
-
-    def initialise_policy_table(turns, n, m):
+        self.table = None
+        
+    def initialise_policy_table(self, turns, n, m):
         #initialise table
         policy_table = np.zeros(shape = (turns, n, m, n, m))
         
@@ -21,18 +22,18 @@ class Policy():
             for j in range(m):
                 for k in range(n):
                     for l in range(m):
-                         policy_table[0][i][j][k][l]=manhattan_dist(i,j) - manhattan_dist(k,l)
+                         policy_table[0][i][j][k][l] = self.manhattan_dist(i,j) - self.manhattan_dist(k,l)
     
         return policy_table
     
     
     #Create Manhattan Function
-    def manhattan_dist(i,j):
+    def manhattan_dist(self, i,j):
         #add complexity with triangular regio later
         return i
     
     #create possible moves function
-    def possible_origins(i,j,k,l,t,n,m):
+    def possible_origins(self, i,j,k,l,t,n,m):
         #i, j, k, l are the game state for the current turn
         #n, m, are the dimensions of the board.
         
@@ -60,13 +61,13 @@ class Policy():
     
     #like a cost function in the dynamic programming example in 760 notes
     #calulates the difference in value between 2 states
-    def value_diff_func(new_state, previous_state): 
-        value_previous_state    = manhattan_dist(previous_state[0], previous_state[1]) - (manhattan_dist(previous_state[2], previous_state[3]))
-        value_new_state         = manhattan_dist(new_state[0], new_state[1]) - (manhattan_dist(new_state[2], new_state[3]))
+    def value_diff_func(self, new_state, previous_state): 
+        value_previous_state    = self.manhattan_dist(previous_state[0], previous_state[1]) - (self.manhattan_dist(previous_state[2], previous_state[3]))
+        value_new_state         = self.manhattan_dist(new_state[0], new_state[1]) - (self.manhattan_dist(new_state[2], new_state[3]))
         return (value_new_state - value_previous_state)
     
     
-    def populate_policy_table(policy_table, turns, n, m):
+    def populate_policy_table(self, policy_table, turns, n, m):
         
         for t in range(1, turns):
             for i in range(n):
@@ -75,11 +76,11 @@ class Policy():
                         for l in range(m):
                             value_of_moves = np.array([])
                             current_state = [i,j,k,l]
-                            possible_previous_states = possible_origins(i,j,k,l,t,n,m)
+                            possible_previous_states = self.possible_origins(i,j,k,l,t,n,m)
     
                             for a in range(len(possible_previous_states)):
                                 #print(policy_table[t-1][possible_previous_states[a][0]][possible_previous_states[a][1]][possible_previous_states[a][2]][possible_previous_states[a][3]])
-                                value_move_to_current = value_diff_func(current_state, possible_previous_states[a])
+                                value_move_to_current = self.value_diff_func(current_state, possible_previous_states[a])
                                 table_value = policy_table[t-1][possible_previous_states[a][0]][possible_previous_states[a][1]][possible_previous_states[a][2]][possible_previous_states[a][3]]
                                 value_of_moves = np.append(value_of_moves,(value_move_to_current + table_value))
                                 
