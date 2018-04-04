@@ -16,24 +16,32 @@ class GUI():
     GREY = (95, 95, 95)
     BLACK = (0, 0, 0)
     RED = (255, 63, 63)
-    LIGHT_GREEN = (63, 243, 63)
     GREEN = (63, 223, 63)
     BLUE = (0, 127, 255)
     YELLOW = (223, 223, 31)
     
-    point_width = 5
-    point_height = 5
+    point_width = 6
+    point_height = 6
+    player_radius = 15
     screen_height = 900
     screen_width = 1600
 
     # Constructor
-    def __init__(self, npoints_x, npoints_y, grid_margin, max_turns):
+    def __init__(self, npoints_x, npoints_y, grid_margin, p1_start, p2_start, max_turns):
         
         # Number of grid points and the distance between them
         self.npoints_x = npoints_x
         self.npoints_y = npoints_y
         self.grid_margin = grid_margin
+        
+        # Initial player positions
+        self.p1_start = p1_start
+        self.p2_start = p2_start
+        
+        # Number of turns each player has
         self.max_turns = max_turns
+        
+        # Policy both players use
         self.policy = Policy()
         
     # Grid points
@@ -63,59 +71,35 @@ class GUI():
             available_moves = []
             element = []
             
-            # Left (must be same row and other player must not be there and this player can't have been there last move)
-            if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx) and 
-                    coords[self.element - 1] != (other_player.x, other_player.y) and
-                    coords[self.element - 1] != self.turn_history[-1]):
-                available_moves.append(coords[self.element - 1])
-                element.append(self.element - 1)
-             
-            # Right (must be same row and other player must not be there and this player can't have been there last move)
-            if (np.floor((self.element + 1) / nx) == np.floor(self.element / nx) and 
-                    coords[self.element + 1] != (other_player.x, other_player.y) and
-                    coords[self.element + 1] != self.turn_history[-1]):
-                available_moves.append(coords[self.element + 1])
-                element.append(self.element + 1)
-             
-            # Above (must not be bottom row and other player must not be there and this player can't have been there last move)
-            if (self.element - nx >= 0 and 
-                    coords[self.element - nx] != (other_player.x, other_player.y) and
-                    coords[self.element - nx] != self.turn_history[-1]):
-                available_moves.append(coords[self.element - nx])
-                element.append(self.element - nx)
-             
-            # Below (must not be top row and other player must not be there and this player can't have been there last move)
-            if (self.element + nx <= nx * ny - 1 and 
-                    coords[self.element + nx] != (other_player.x, other_player.y) and
-                    coords[self.element + nx] != self.turn_history[-1]):
-                available_moves.append(coords[self.element + nx])
-                element.append(self.element + nx)
-             
             # Left (must be same row and other player must not be there)
-            if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx) and coords[self.element - 1] != (other_player.x, other_player.y)):
+            if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx) 
+                and coords[self.element - 1] != (other_player.x, other_player.y)):
                 available_moves.append(coords[self.element - 1])
                 element.append(self.element - 1)
              
             # Right (must be same row and other player must not be there)
-            if (np.floor((self.element + 1) / nx) == np.floor(self.element / nx) and coords[self.element + 1] != (other_player.x, other_player.y)):
+            if (np.floor((self.element + 1) / nx) == np.floor(self.element / nx) 
+                and coords[self.element + 1] != (other_player.x, other_player.y)):
                 available_moves.append(coords[self.element + 1])
                 element.append(self.element + 1)
              
             # Above (must not be bottom row and other player must not be there)
-            if (self.element - nx >= 0 and coords[self.element - nx] != (other_player.x, other_player.y)):
+            if (self.element - nx >= 0 
+                and coords[self.element - nx] != (other_player.x, other_player.y)):
                 available_moves.append(coords[self.element - nx])
                 element.append(self.element - nx)
              
             # Below (must not be top row and other player must not be there)
-            if (self.element + nx <= nx * ny - 1 and coords[self.element + nx] != (other_player.x, other_player.y)):
+            if (self.element + nx <= nx * ny - 1 
+                and coords[self.element + nx] != (other_player.x, other_player.y)):
                 available_moves.append(coords[self.element + nx])
                 element.append(self.element + nx)
-             
+            
             # Add available moves to list (and to override)
             available_points = pygame.sprite.Group()
             points_override = pygame.sprite.Group()
             for i in range(len(available_moves)):
-                point = GUI.GridPoint(available_moves[i][0], available_moves[i][1], GUI.LIGHT_GREEN)
+                point = GUI.GridPoint(available_moves[i][0], available_moves[i][1], GUI.GREEN)
                 available_points.add(point)
                 point = GUI.GridPoint(available_moves[i][0], available_moves[i][1], GUI.GREY)
                 points_override.add(point)
@@ -202,9 +186,9 @@ class GUI():
                     # Define values to call policy table
                     k_vals = []
                     l_vals = []
-                    for i in range(len(possible_grid_points)):
-                        k_vals.append(possible_grid_points[i][1])
-                        l_vals.append(possible_grid_points[i][0])
+                    for k in range(len(possible_grid_points)):
+                        k_vals.append(possible_grid_points[k][1])
+                        l_vals.append(possible_grid_points[k][0])
                     i = int((other_player.y - min_y) / grid_margin)
                     j = int((other_player.x - min_x) / grid_margin)
                     t = current_turn * 2 - 2
@@ -223,29 +207,6 @@ class GUI():
                     
                     # Move based on maximum policy value
                     self.move(possible_moves[element], move_element[element], base_grid_points, screen, screen_colour, display)
-                
-                pygame.time.delay(1500)
-                
-                # Array of possible next move coordinates
-                i_next = []
-                j_next = []
-                for i in range(len(possible_moves)):
-                    i_next.append(possible_moves[i][0])
-                    j_next.append(possible_moves[i][1])
-                
-                # Other players' current coordinates
-                k = other_player.x
-                l = other_player.y
-                
-                # Store other player's coordinates in a list
-                GUI.policy.i_history.append(other_player.x)
-                GUI.policy.j_history.append(other_player.y)
-                
-                # Implement policy
-                element = GUI.policy.valueFunction(i_next, j_next, k, l)
-                
-                # Move based on policy's decision
-                self.move(possible_moves[element], move_element[element], base_grid_points, screen, screen_colour, display)
                 
                 # End turn
                 self.Turn = False
@@ -358,7 +319,8 @@ class GUI():
                     # Check if mouse click inside any game mode button
                     index = -1
                     for i in range(len(buttons)):
-                        if (x_click >= buttons[i][0] and x_click <= buttons[i][0] + buttons[i][2] - 1 and y_click >= buttons[i][1] and y_click <= buttons[i][1] + buttons[i][3] - 1):
+                        if (x_click >= buttons[i][0] and x_click <= buttons[i][0] + buttons[i][2] - 1 
+                            and y_click >= buttons[i][1] and y_click <= buttons[i][1] + buttons[i][3] - 1):
                             index = i
                             game_mode = True
                             # Click can not be within any other button
@@ -368,17 +330,14 @@ class GUI():
                     if (index != -1):
                         
                         # Initialise players
-                        p1_pos = int((4.0 / 11.0) * self.npoints_x - 1)
-                        p2_pos = self.npoints_x - p1_pos - 1
+                        p1_pos = self.p1_start[0] * self.npoints_x + self.p1_start[1]
+                        p2_pos = self.p2_start[0] * self.npoints_x + self.p2_start[1]
 
-                        #self.p1 = GUI.Player(self.coords[p1_pos][0], self.coords[p1_pos][1], p1_pos, GUI.RED, 10)
-                        self.p1 = GUI.Player(self.coords[34][0], self.coords[34][1], 34, GUI.RED, 20)
+                        self.p1 = GUI.Player(self.coords[p1_pos][0], self.coords[p1_pos][1], p1_pos, GUI.RED, GUI.player_radius)
                         self.p1.player1 = True
-                        self.p1.turn_history.append((self.p1.x, self.p1.y))
-                        #self.p2 = GUI.Player(self.coords[p2_pos][0], self.coords[p2_pos][1], p2_pos, GUI.BLUE, 10)
-                        self.p2 = GUI.Player(self.coords[24][0], self.coords[24][1], 24, GUI.BLUE, 20)
+
+                        self.p2 = GUI.Player(self.coords[p2_pos][0], self.coords[p2_pos][1], p2_pos, GUI.BLUE, GUI.player_radius)
                         self.p2.player1 = False
-                        self.p2.turn_history.append((self.p2.x, self.p2.y))
                         
                         # Person vs. Policy
                         if (index == 1):
@@ -461,5 +420,5 @@ class GUI():
 
 
 # Create GUI object
-gameGUI = GUI(11, 7, 100, 4) # xpoints, ypoints, pointmargin, maxturns
+gameGUI = GUI(11, 7, 100, (0, 3), (0, 7), 5) # xpoints, ypoints, pointmargin, p1_start, p2_start, maxturns
 gameGUI.execute()
