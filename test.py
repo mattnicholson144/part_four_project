@@ -20,19 +20,21 @@ class GUI():
     BLUE = (0, 127, 255)
     YELLOW = (223, 223, 31)
     
+    screen_width = 1600
+    screen_height = 900
+    game_width = 1240
+    game_height = 790
+    
     point_width = 6
     point_height = 6
     player_radius = 15
-    screen_height = 900
-    screen_width = 1600
 
     # Constructor
-    def __init__(self, npoints_x, npoints_y, grid_margin, p1_start, p2_start, max_turns):
+    def __init__(self, npoints_x, npoints_y, p1_start, p2_start, max_turns):
         
         # Number of grid points and the distance between them
         self.npoints_x = npoints_x
         self.npoints_y = npoints_y
-        self.grid_margin = grid_margin
         
         # Initial player positions
         self.p1_start = p1_start
@@ -134,7 +136,7 @@ class GUI():
             # Update display
             display.update()
             
-        def haveTurn(self, other_player, policy_table, current_turn, npoints_x, npoints_y, grid_margin, coords, screen, screen_colour, display):
+        def haveTurn(self, other_player, policy_table, current_turn, npoints_x, npoints_y, grid_margin_x, grid_margin_y, coords, screen, screen_colour, display):
             
             # Show available moves
             possible_moves, move_element, base_grid_points = self.availableMoves(npoints_x, npoints_y, coords, screen, display, other_player)
@@ -150,7 +152,7 @@ class GUI():
                 min_y = coords[0][1]
                 possible_grid_points = []
                 for i in range(len(possible_moves)):
-                    possible_grid_points.append((int((possible_moves[i][0] - min_x) / grid_margin), int((possible_moves[i][1] - min_y) / grid_margin)))
+                    possible_grid_points.append((int((possible_moves[i][0] - min_x) / grid_margin_x), int((possible_moves[i][1] - min_y) / grid_margin_y)))
                 
                 # If this is player 1
                 if self.player1 == True:
@@ -161,8 +163,8 @@ class GUI():
                     for i in range(len(possible_grid_points)):
                         i_vals.append(possible_grid_points[i][1])
                         j_vals.append(possible_grid_points[i][0])
-                    k = int((other_player.y - min_y) / grid_margin)
-                    l = int((other_player.x - min_x) / grid_margin)
+                    k = int((other_player.y - min_y) / grid_margin_y)
+                    l = int((other_player.x - min_x) / grid_margin_x)
                     t = current_turn * 2 - 1
                     
                     # Find maximum value and element from table
@@ -189,8 +191,8 @@ class GUI():
                     for k in range(len(possible_grid_points)):
                         k_vals.append(possible_grid_points[k][1])
                         l_vals.append(possible_grid_points[k][0])
-                    i = int((other_player.y - min_y) / grid_margin)
-                    j = int((other_player.x - min_x) / grid_margin)
+                    i = int((other_player.y - min_y) / grid_margin_y)
+                    j = int((other_player.x - min_x) / grid_margin_x)
                     t = current_turn * 2 - 2
                     
                     # Find maximum value and element from table
@@ -262,14 +264,27 @@ class GUI():
         self.all_grid_points = pygame.sprite.Group()
         self.coords = []
         
+        # Calculate grid margins and offset (due to game screen on right)
+        self.grid_margin_x = np.floor(self.game_width / (self.npoints_x - 1))
+        self.grid_margin_y = np.floor(self.game_height / (self.npoints_y - 1))
+        offset_x = 125
+        
         # Populate arrays
+        x_start = GUI.screen_width / 2 + offset_x - ((self.npoints_x - 1) / 2) * self.grid_margin_x
+        y_start = GUI.screen_height / 2 - ((self.npoints_y - 1) / 2) * self.grid_margin_y
         for i in range(self.npoints_y):
             for j in range(self.npoints_x):
-                x = int(j * self.grid_margin + GUI.screen_width / 2 - np.floor(self.npoints_x / 2) * self.grid_margin)
-                y = int(i * self.grid_margin + GUI.screen_height / 2 - np.floor(self.npoints_y / 2) * self.grid_margin)
+                x = int(j * self.grid_margin_x + x_start)
+                y = int(i * self.grid_margin_y + y_start)
                 point = GUI.GridPoint(x, y, GUI.GREY)
                 self.all_grid_points.add(point)
                 self.coords.append((x, y))
+        
+        # Draw play grid
+        grid_box = pygame.Rect(275, 25, 1300, 850)
+        inside_box = pygame.Rect(280, 30, 1290, 840)
+        pygame.draw.rect(self.screen, GUI.GREY, grid_box)
+        pygame.draw.rect(self.screen, GUI.LIGHT_GREY, inside_box)
         
         # Draw grid points on screen
         self.all_grid_points.draw(self.screen)
@@ -278,7 +293,7 @@ class GUI():
     def initialiseGameMode(self):
         
         # Game mode text surfaces
-        game_mode_text_surface = self.my_font.render('Select game mode', True, GUI.BLACK)
+        game_mode_text_surface = self.my_font.render('Select game mode', True, GUI.GREY)
         mode_text_surfaces = []
         mode_text_surfaces.append(self.my_font.render('Person vs. Person', True, GUI.LIGHT_GREY))
         mode_text_surfaces.append(self.my_font.render('Person vs. Policy', True, GUI.LIGHT_GREY))
@@ -288,7 +303,7 @@ class GUI():
         buttons = []
         increment = 50
         for i in range(len(mode_text_surfaces)):
-            buttons.append((50, 300 + i * increment, mode_text_surfaces[i].get_size()[0], mode_text_surfaces[i].get_size()[1]))
+            buttons.append((50, 150 + i * increment, mode_text_surfaces[i].get_size()[0], mode_text_surfaces[i].get_size()[1]))
         
         # Game mode backgrounds
         button_backgrounds = []
@@ -298,7 +313,7 @@ class GUI():
             button_backgrounds[i].fill(colour_list[i])
         
         # Draw background and text surfaces
-        self.screen.blit(game_mode_text_surface, (50, 250))
+        self.screen.blit(game_mode_text_surface, (50, 100))
         for i in range(len(buttons)):
             self.screen.blit(button_backgrounds[i], (buttons[i][0], buttons[i][1]))
             self.screen.blit(mode_text_surfaces[i], (buttons[i][0], buttons[i][1]))
@@ -355,19 +370,19 @@ class GUI():
         for i in range(len(buttons)):
             button_backgrounds[i].fill(self.screen_colour)
             self.screen.blit(button_backgrounds[i], (buttons[i][0], buttons[i][1]))
-        pygame.display.update()
         
         # Show turns remaining
         self.current_turn = self.max_turns
-        self.turn_text_colour = GUI.BLACK
+        self.turn_text_colour = GUI.GREY
         self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
         
         # Draw players and turns remaining on screen
         pygame.draw.circle(self.screen, self.p1.colour, (self.p1.x, self.p1.y), self.p1.radius)
         pygame.draw.circle(self.screen, self.p2.colour, (self.p2.x, self.p2.y), self.p2.radius)
-        self.text_x = 50
-        self.text_y = 150
+        self.text_x = 35
+        self.text_y = 400
         self.screen.blit(self.text_surface, (self.text_x, self.text_y))
+        
         pygame.display.update()
         
     def playGame(self):
@@ -380,16 +395,16 @@ class GUI():
             
             # Player 1's turn
             while self.p1.Turn:
-                self.p1.haveTurn(self.p2, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin, self.coords, self.screen, self.screen_colour, pygame.display)
+                self.p1.haveTurn(self.p2, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin_x, self.grid_margin_y, self.coords, self.screen, self.screen_colour, pygame.display)
                 
             # Player 2's turn
             while self.p2.Turn:
-                self.p2.haveTurn(self.p1, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin, self.coords, self.screen, self.screen_colour, pygame.display)
+                self.p2.haveTurn(self.p1, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin_x, self.grid_margin_y, self.coords, self.screen, self.screen_colour, pygame.display)
                 
             # Number of turns remaining decrements
             self.current_turn -= 1
      
-            # Display new turns remaining (MAKE THIS A METHOD)
+            # Display new turns remaining 
             self.screen.fill(self.screen_colour, (self.text_x, self.text_y, self.text_surface.get_size()[0], self.font_size))
             self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
             self.screen.blit(self.text_surface, (self.text_x, self.text_y))
@@ -420,5 +435,5 @@ class GUI():
 
 
 # Create GUI object
-gameGUI = GUI(11, 7, 100, (0, 3), (0, 7), 5) # xpoints, ypoints, pointmargin, p1_start, p2_start, maxturns
+gameGUI = GUI(11, 7, (0, 3), (0, 7), 5) # xpoints, ypoints, p1_start, p2_start, maxturns
 gameGUI.execute()
