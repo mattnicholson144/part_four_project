@@ -18,7 +18,7 @@ class GUI():
     RED = (255, 63, 63)
     GREEN = (63, 223, 63)
     BLUE = (0, 127, 255)
-    YELLOW = (223, 223, 31)
+    YELLOW = (247, 247, 31)
     
     screen_width = 1600
     screen_height = 900
@@ -365,23 +365,63 @@ class GUI():
         
         # Remove game mode text and buttons
         game_mode_text_surface.fill(self.screen_colour)
-        self.screen.blit(game_mode_text_surface, (50, 250))
+        self.screen.blit(game_mode_text_surface, (50, 100))
         
         for i in range(len(buttons)):
             button_backgrounds[i].fill(self.screen_colour)
             self.screen.blit(button_backgrounds[i], (buttons[i][0], buttons[i][1]))
         
-        # Show turns remaining
-        self.current_turn = self.max_turns
-        self.turn_text_colour = GUI.GREY
-        self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
-        
-        # Draw players and turns remaining on screen
+        # Players
         pygame.draw.circle(self.screen, self.p1.colour, (self.p1.x, self.p1.y), self.p1.radius)
         pygame.draw.circle(self.screen, self.p2.colour, (self.p2.x, self.p2.y), self.p2.radius)
-        self.text_x = 35
-        self.text_y = 400
-        self.screen.blit(self.text_surface, (self.text_x, self.text_y))
+        
+        # Turns remaining text
+        turns_outside_box = pygame.Rect(25, 100, 225, 200)
+        turns_inside_box = pygame.Rect(30, 105, 215, 190)
+        pygame.draw.rect(self.screen, GUI.RED, turns_outside_box)
+        pygame.draw.rect(self.screen, GUI.LIGHT_GREY, turns_inside_box)
+        
+        self.turn_text_surface = self.my_font.render('Turns remaining', True, GUI.GREY)
+        self.screen.blit(self.turn_text_surface, (62, 115))
+        
+        # Turns remaining number
+        self.current_turn = self.max_turns
+        
+        self.turn_number_font = pygame.font.SysFont('Calibri', 144)
+        self.turn_number_colour = GUI.GREEN
+        
+        self.turn_number_string = '0' + str(self.current_turn)
+        self.turn_number_string = self.turn_number_string[-2:]
+        self.turn_number_surface = self.turn_number_font.render(self.turn_number_string, True, self.turn_number_colour)
+        
+        self.turn_number_pos = (65, 150)
+        self.screen.blit(self.turn_number_surface, self.turn_number_pos)
+        
+        # Start line message and arrow
+        start_line_surface = self.my_font.render('Start line', True, GUI.BLUE)
+        start_line_background = pygame.Surface((120, 21))
+        start_line_background.fill(GUI.LIGHT_GREY)
+        sl_pos = (80, 45)
+        
+        self.screen.blit(start_line_background, sl_pos)
+        pygame.draw.polygon(self.screen, GUI.GREY, ((sl_pos[0] + 100, sl_pos[1] + 7), (sl_pos[0] + 100, sl_pos[1] + 13), 
+                                                      (sl_pos[0] + 110, sl_pos[1] + 13), (sl_pos[0] + 110, sl_pos[1] + 17), 
+                                                      (sl_pos[0] + 117, sl_pos[1] + 10), (sl_pos[0] + 110, sl_pos[1] + 3), 
+                                                      (sl_pos[0] + 110, sl_pos[1] + 7), (sl_pos[0] + 100, sl_pos[1] + 7)))
+        self.screen.blit(start_line_surface, sl_pos)
+        
+        # Wind direction message and arrow
+        wind_direction_surface = self.my_font.render('Wind direction', True, GUI.LIGHT_GREY)
+        wind_direction_background = pygame.Surface((141, 125))
+        wind_direction_background.fill(GUI.GREY)
+        wd_pos = (65, 750)
+        
+        self.screen.blit(wind_direction_background, wd_pos)
+        pygame.draw.polygon(self.screen, GUI.YELLOW, ((wd_pos[0] + 55, wd_pos[1] + 30), (wd_pos[0] + 55, wd_pos[1] + 80), 
+                                                      (wd_pos[0] + 35, wd_pos[1] + 80), (wd_pos[0] + 70, wd_pos[1] + 115), 
+                                                      (wd_pos[0] + 105, wd_pos[1] + 80), (wd_pos[0] + 85, wd_pos[1] + 80), 
+                                                      (wd_pos[0] + 85, wd_pos[1] + 30), (wd_pos[0] + 55, wd_pos[1] + 30)))
+        self.screen.blit(wind_direction_surface, (wd_pos[0], wd_pos[1] + 3))
         
         pygame.display.update()
         
@@ -404,12 +444,17 @@ class GUI():
             # Number of turns remaining decrements
             self.current_turn -= 1
      
-            # Display new turns remaining 
-            self.screen.fill(self.screen_colour, (self.text_x, self.text_y, self.text_surface.get_size()[0], self.font_size))
-            self.text_surface = self.my_font.render('Turns remaining: %d' % (self.current_turn), True, self.turn_text_colour)
-            self.screen.blit(self.text_surface, (self.text_x, self.text_y))
+            # New turns remaining
+            self.screen.fill(self.screen_colour, (self.turn_number_pos[0], self.turn_number_pos[1], 
+                                                  self.turn_number_surface.get_size()[0], self.turn_number_surface.get_size()[1]))
+            
+            self.turn_number_string = '0' + str(self.current_turn)
+            self.turn_number_string = self.turn_number_string[-2:]
+            self.turn_number_surface = self.turn_number_font.render(self.turn_number_string, True, self.turn_number_colour)
+            
+            self.screen.blit(self.turn_number_surface, self.turn_number_pos)
             pygame.display.update()
-                         
+            
             # If no turns remaining, end game
             if (self.current_turn == 0):
                 self.game_complete = True
@@ -421,7 +466,7 @@ class GUI():
         self.initialiseGameMode()
         self.playGame()
         
-        # Exit simulator (HAVE AN END GAME SCREEN)
+        # Exit simulator
         pygame.quit()
 # ==========================================================================================
 
