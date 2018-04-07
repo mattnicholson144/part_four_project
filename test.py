@@ -46,6 +46,10 @@ class GUI():
         # Policy both players use
         self.policy = Policy()
         
+        # Play game
+        self.createAndShowGUI()
+        self.execute()
+        
     # Grid points
     class GridPoint(pygame.sprite.Sprite):
         def __init__(self, x, y, colour):
@@ -261,33 +265,38 @@ class GUI():
         self.my_font = pygame.font.SysFont('Calibri', self.font_size)
         
         # Create arrays
-        self.all_grid_points = pygame.sprite.Group()
         self.coords = []
+        self.all_grid_points = pygame.sprite.Group()
+        self.hidden_grid_points = pygame.sprite.Group()
         
         # Calculate grid margins and offset (due to game screen on right)
         self.grid_margin_x = np.floor(self.game_width / (self.npoints_x - 1))
         self.grid_margin_y = np.floor(self.game_height / (self.npoints_y - 1))
         offset_x = 125
         
-        # Populate arrays
+        # Populate arrays (grid points are shown after game mode selected)
         x_start = GUI.screen_width / 2 + offset_x - ((self.npoints_x - 1) / 2) * self.grid_margin_x
         y_start = GUI.screen_height / 2 - ((self.npoints_y - 1) / 2) * self.grid_margin_y
         for i in range(self.npoints_y):
             for j in range(self.npoints_x):
                 x = int(j * self.grid_margin_x + x_start)
                 y = int(i * self.grid_margin_y + y_start)
+                self.coords.append((x, y))
+                
+                # Shown points
                 point = GUI.GridPoint(x, y, GUI.GREY)
                 self.all_grid_points.add(point)
-                self.coords.append((x, y))
-        
+                
+                # Hidden points
+                hidden_point = GUI.GridPoint(x, y, self.screen_colour)
+                self.hidden_grid_points.add(hidden_point)
+                
         # Draw play grid
         grid_box = pygame.Rect(275, 25, 1300, 850)
         inside_box = pygame.Rect(280, 30, 1290, 840)
         pygame.draw.rect(self.screen, GUI.GREY, grid_box)
         pygame.draw.rect(self.screen, GUI.LIGHT_GREY, inside_box)
         
-        # Draw grid points on screen
-        self.all_grid_points.draw(self.screen)
         pygame.display.update()
     
     def initialiseGameMode(self):
@@ -371,15 +380,18 @@ class GUI():
             button_backgrounds[i].fill(self.screen_colour)
             self.screen.blit(button_backgrounds[i], (buttons[i][0], buttons[i][1]))
         
+        # Grid points
+        self.all_grid_points.draw(self.screen)
+        
         # Players
         pygame.draw.circle(self.screen, self.p1.colour, (self.p1.x, self.p1.y), self.p1.radius)
         pygame.draw.circle(self.screen, self.p2.colour, (self.p2.x, self.p2.y), self.p2.radius)
         
         # Turns remaining text
-        turns_outside_box = pygame.Rect(25, 100, 225, 200)
-        turns_inside_box = pygame.Rect(30, 105, 215, 190)
-        pygame.draw.rect(self.screen, GUI.RED, turns_outside_box)
-        pygame.draw.rect(self.screen, GUI.LIGHT_GREY, turns_inside_box)
+        self.turns_outside_box = pygame.Rect(25, 100, 225, 200)
+        self.turns_inside_box = pygame.Rect(30, 105, 215, 190)
+        pygame.draw.rect(self.screen, GUI.RED, self.turns_outside_box)
+        pygame.draw.rect(self.screen, self.screen_colour, self.turns_inside_box)
         
         self.turn_text_surface = self.my_font.render('Turns remaining', True, GUI.GREY)
         self.screen.blit(self.turn_text_surface, (62, 115))
@@ -387,7 +399,8 @@ class GUI():
         # Turns remaining number
         self.current_turn = self.max_turns
         
-        self.turn_number_font = pygame.font.SysFont('Calibri', 144)
+        self.turn_number_font_size = 144
+        self.turn_number_font = pygame.font.SysFont('Calibri', self.turn_number_font_size)
         self.turn_number_colour = GUI.GREEN
         
         self.turn_number_string = '0' + str(self.current_turn)
@@ -398,30 +411,30 @@ class GUI():
         self.screen.blit(self.turn_number_surface, self.turn_number_pos)
         
         # Start line message and arrow
-        start_line_surface = self.my_font.render('Start line', True, GUI.BLUE)
-        start_line_background = pygame.Surface((120, 21))
-        start_line_background.fill(GUI.LIGHT_GREY)
-        sl_pos = (80, 45)
+        self.start_line_surface = self.my_font.render('Start line', True, GUI.BLUE)
+        self.start_line_background = pygame.Surface((120, 21))
+        self.start_line_background.fill(GUI.LIGHT_GREY)
+        self.sl_pos = (80, 45)
         
-        self.screen.blit(start_line_background, sl_pos)
-        pygame.draw.polygon(self.screen, GUI.GREY, ((sl_pos[0] + 100, sl_pos[1] + 7), (sl_pos[0] + 100, sl_pos[1] + 13), 
-                                                      (sl_pos[0] + 110, sl_pos[1] + 13), (sl_pos[0] + 110, sl_pos[1] + 17), 
-                                                      (sl_pos[0] + 117, sl_pos[1] + 10), (sl_pos[0] + 110, sl_pos[1] + 3), 
-                                                      (sl_pos[0] + 110, sl_pos[1] + 7), (sl_pos[0] + 100, sl_pos[1] + 7)))
-        self.screen.blit(start_line_surface, sl_pos)
+        self.screen.blit(self.start_line_background, self.sl_pos)
+        pygame.draw.polygon(self.screen, GUI.GREY, ((self.sl_pos[0] + 100, self.sl_pos[1] + 7), (self.sl_pos[0] + 100, self.sl_pos[1] + 13), 
+                                                    (self.sl_pos[0] + 110, self.sl_pos[1] + 13), (self.sl_pos[0] + 110, self.sl_pos[1] + 17), 
+                                                    (self.sl_pos[0] + 117, self.sl_pos[1] + 10), (self.sl_pos[0] + 110, self.sl_pos[1] + 3), 
+                                                    (self.sl_pos[0] + 110, self.sl_pos[1] + 7), (self.sl_pos[0] + 100, self.sl_pos[1] + 7)))
+        self.screen.blit(self.start_line_surface, self.sl_pos)
         
         # Wind direction message and arrow
-        wind_direction_surface = self.my_font.render('Wind direction', True, GUI.LIGHT_GREY)
-        wind_direction_background = pygame.Surface((141, 125))
-        wind_direction_background.fill(GUI.GREY)
-        wd_pos = (65, 750)
+        self.wind_direction_surface = self.my_font.render('Wind direction', True, GUI.LIGHT_GREY)
+        self.wind_direction_background = pygame.Surface((141, 125))
+        self.wind_direction_background.fill(GUI.GREY)
+        self.wd_pos = (65, 750)
         
-        self.screen.blit(wind_direction_background, wd_pos)
-        pygame.draw.polygon(self.screen, GUI.YELLOW, ((wd_pos[0] + 55, wd_pos[1] + 30), (wd_pos[0] + 55, wd_pos[1] + 80), 
-                                                      (wd_pos[0] + 35, wd_pos[1] + 80), (wd_pos[0] + 70, wd_pos[1] + 115), 
-                                                      (wd_pos[0] + 105, wd_pos[1] + 80), (wd_pos[0] + 85, wd_pos[1] + 80), 
-                                                      (wd_pos[0] + 85, wd_pos[1] + 30), (wd_pos[0] + 55, wd_pos[1] + 30)))
-        self.screen.blit(wind_direction_surface, (wd_pos[0], wd_pos[1] + 3))
+        self.screen.blit(self.wind_direction_background, self.wd_pos)
+        pygame.draw.polygon(self.screen, GUI.YELLOW, ((self.wd_pos[0] + 55, self.wd_pos[1] + 30), (self.wd_pos[0] + 55, self.wd_pos[1] + 80), 
+                                                      (self.wd_pos[0] + 35, self.wd_pos[1] + 80), (self.wd_pos[0] + 70, self.wd_pos[1] + 115), 
+                                                      (self.wd_pos[0] + 105, self.wd_pos[1] + 80), (self.wd_pos[0] + 85, self.wd_pos[1] + 80), 
+                                                      (self.wd_pos[0] + 85, self.wd_pos[1] + 30), (self.wd_pos[0] + 55, self.wd_pos[1] + 30)))
+        self.screen.blit(self.wind_direction_surface, (self.wd_pos[0], self.wd_pos[1] + 3))
         
         pygame.display.update()
         
@@ -458,16 +471,129 @@ class GUI():
             # If no turns remaining, end game
             if (self.current_turn == 0):
                 self.game_complete = True
-         
+    
+    def endGame(self):
+        
+        # Score box
+        score_outside_box = pygame.Rect(25, 325, 225, 400)
+        score_inside_box = pygame.Rect(30, 330, 215, 390)
+        pygame.draw.rect(self.screen, GUI.GREEN, score_outside_box)
+        pygame.draw.rect(self.screen, self.screen_colour, score_inside_box)
+        
+        # Determine game score
+        min_x = self.coords[0][0]
+        min_y = self.coords[0][1]
+        
+        i = int((self.p1.y - min_y) / self.grid_margin_y)
+        j = int((self.p1.x - min_x) / self.grid_margin_x)
+        k = int((self.p2.y - min_y) / self.grid_margin_y)
+        l = int((self.p2.x - min_x) / self.grid_margin_x)
+        
+        game_score = int(self.policy.table[0][i][j][k][l])
+        
+        # Score font
+        self.score_font_size = 72
+        self.score_font = pygame.font.SysFont('Calibri', self.score_font_size)
+        
+        # Score text position
+        self.score_text_pos = (62, 380)
+        
+        # Player 1 wins
+        if (game_score == -1):
+            red_surface = self.score_font.render('RED', True, GUI.RED)
+            wins_surface = self.score_font.render('WINS!', True, GUI.GREY)
+            self.screen.blit(red_surface, (self.score_text_pos[0] + 18, self.score_text_pos[1]))
+            self.screen.blit(wins_surface, (self.score_text_pos[0] - 14, self.score_text_pos[1] + 70))
+        
+        # Player 2 wins
+        elif (game_score == 1):
+            blue_surface = self.score_font.render('BLUE', True, GUI.BLUE)
+            wins_surface = self.score_font.render('WINS!', True, GUI.GREY)
+            self.screen.blit(blue_surface, self.score_text_pos)
+            self.screen.blit(wins_surface, (self.score_text_pos[0] - 14, self.score_text_pos[1] + 70))
+            
+        # Draw
+        elif (game_score == 0):
+            draw_surface = self.score_font.render('DRAW!', True, GUI.GREY)
+            self.screen.blit(draw_surface, (self.score_text_pos[0] - 27, self.score_text_pos[1] + 35))
+        
+        # Exit or restart message
+        WYL_surface = self.my_font.render('Would you like', True, GUI.GREY)
+        TPA_surface = self.my_font.render('to play again?', True, GUI.GREY)
+        self.screen.blit(WYL_surface, (self.score_text_pos[0] + 7, self.score_text_pos[1] + 180))
+        self.screen.blit(TPA_surface, (self.score_text_pos[0] + 12, self.score_text_pos[1] + 210))
+        
+        # Yes / No buttons
+        yes_surface = self.my_font.render('Yes', True, GUI.LIGHT_GREY)
+        yes_background = pygame.Surface((50, 30))
+        yes_background.fill(GUI.BLUE)
+        yes_pos = (65, 635)
+        yes_size = yes_background.get_size()
+        
+        no_surface = self.my_font.render('No', True, GUI.LIGHT_GREY)
+        no_background = pygame.Surface((50, 30))
+        no_background.fill(GUI.RED)
+        no_pos = (160, 635)
+        no_size = no_background.get_size()
+        
+        self.screen.blit(yes_background, yes_pos)
+        self.screen.blit(yes_surface, (yes_pos[0] + 10, yes_pos[1] + 4))
+        self.screen.blit(no_background, no_pos)
+        self.screen.blit(no_surface, (no_pos[0] + 11, no_pos[1] + 4))
+        
+        pygame.display.update()
+        
+        # Wait for end game to be selected
+        self.end_game_selected = False
+        
+        while not self.end_game_selected:
+            
+            # When user click is within area of button, select end game
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    
+                    # Coordinates of mouse click
+                    x_click = pygame.mouse.get_pos()[0]
+                    y_click = pygame.mouse.get_pos()[1]
+                    
+                    # Check if mouse click inside yes button
+                    if (x_click >= yes_pos[0] and x_click <= yes_pos[0] + yes_size[0] - 1
+                        and y_click >= yes_pos[1] and y_click <= yes_pos[1] + yes_size[1] - 1):
+                        
+                        # Remove game objects
+                        self.start_line_background.fill(self.screen_colour)
+                        self.screen.blit(self.start_line_background, self.sl_pos)
+                        
+                        pygame.draw.rect(self.screen, self.screen_colour, self.turns_outside_box)
+                        
+                        pygame.draw.rect(self.screen, self.screen_colour, score_outside_box)
+                        
+                        self.wind_direction_background.fill(self.screen_colour)
+                        self.screen.blit(self.wind_direction_background, self.wd_pos)
+                        
+                        self.hidden_grid_points.draw(self.screen)
+                        
+                        pygame.draw.circle(self.screen, self.screen_colour, (self.p1.x, self.p1.y), self.p1.radius)
+                        pygame.draw.circle(self.screen, self.screen_colour, (self.p2.x, self.p2.y), self.p2.radius)
+                        
+                        # Restart game
+                        self.end_game_selected = True
+                        self.execute()
+                        
+                    # Check if mouse click inside no button
+                    elif (x_click >= no_pos[0] and x_click <= no_pos[0] + no_size[0] - 1
+                        and y_click >= no_pos[1] and y_click <= no_pos[1] + no_size[1] - 1):
+                        
+                        # Exit game
+                        self.end_game_selected = True
+                        pygame.quit()
+        
     def execute(self):
         
         # Execute game methods in order
-        self.createAndShowGUI()
         self.initialiseGameMode()
         self.playGame()
-        
-        # Exit simulator
-        pygame.quit()
+        self.endGame()
 # ==========================================================================================
 
 
@@ -480,5 +606,4 @@ class GUI():
 
 
 # Create GUI object
-gameGUI = GUI(11, 7, (0, 3), (0, 7), 5) # xpoints, ypoints, p1_start, p2_start, maxturns
-gameGUI.execute()
+gameGUI = GUI(11, 7, (0, 3), (0, 7), 1) # xpoints, ypoints, p1_start, p2_start, maxturns
