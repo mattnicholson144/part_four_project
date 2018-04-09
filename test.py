@@ -72,23 +72,35 @@ class GUI():
             self.turn = False
             self.policy = False
             self.turn_history = []
+            self.is_bumped = False
              
-        def availableMoves(self, nx, ny, coords, screen, display, other_player):
+        def availableMoves(self, nx, ny, coords, screen, screen_colour, display, my_font, other_player):
             available_moves = []
             element = []
+            can_bump = False
+            bump_element = -1
             
-            # Left (must be same row and other player must not be there)
-            if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx) 
-                and coords[self.element - 1] != (other_player.x, other_player.y)):
+            # Left (must be same row and other player may be there to bump)
+            if (np.floor((self.element - 1) / nx) == np.floor(self.element / nx)):
                 available_moves.append(coords[self.element - 1])
                 element.append(self.element - 1)
+                
+                # If other player is there (therefore a bump)
+                if coords[self.element - 1] == (other_player.x, other_player.y):
+                    can_bump = True
+                    bump_element = 0
              
             # Right (must be same row and other player must not be there)
             if (np.floor((self.element + 1) / nx) == np.floor(self.element / nx) 
                 and coords[self.element + 1] != (other_player.x, other_player.y)):
                 available_moves.append(coords[self.element + 1])
                 element.append(self.element + 1)
-             
+                
+                # If other player has just bumped you, cannot move through them
+                if self.is_bumped:
+                    available_moves.pop()
+                    element.pop()
+                
             # Above (must not be bottom row and other player must not be there)
             if (self.element - nx >= 0 
                 and coords[self.element - nx] != (other_player.x, other_player.y)):
@@ -109,15 +121,46 @@ class GUI():
                 available_points.add(point)
                 point = GUI.GridPoint(available_moves[i][0], available_moves[i][1], GUI.GREY)
                 points_override.add(point)
-             
+            
+            # Draw bump circle and notify on screen if can bump
+            if can_bump:
+                pygame.draw.circle(screen, GUI.GREEN, available_moves[0], int(np.ceil(max(GUI.point_width, GUI.point_height) / np.sqrt(2))) + 1)
+                
+                # Draw notification box
+                bump_outside_box = pygame.Rect(25, 425, 225, 200)
+                bump_inside_box = pygame.Rect(30, 430, 215, 190)
+                pygame.draw.rect(screen, GUI.GREEN, bump_outside_box)
+                pygame.draw.rect(screen, screen_colour, bump_inside_box)
+                
+                # If red can bump, red text on top
+                if self.player1:
+                    red_pos = (95, 455)
+                    blue_pos = (87, 555)
+                
+                # If blue can bump, blue text on top
+                else:
+                    blue_pos = (87, 455)
+                    red_pos = (95, 555)
+                
+                # Display message
+                colour_font = pygame.font.SysFont('Calibri', 48)
+                red_surface = colour_font.render('RED', True, GUI.RED)
+                blue_surface = colour_font.render('BLUE', True, GUI.BLUE)
+                can_bump_surface = my_font.render('can bump', True, GUI.GREY)
+                
+                screen.blit(can_bump_surface, (90, 515))
+                screen.blit(red_surface, red_pos)
+                screen.blit(blue_surface, blue_pos)
+            
             # Draw available moves on screen
             available_points.draw(screen)
+            
             display.update()
              
-            return available_moves, element, points_override
+            return available_moves, element, bump_element, points_override
          
-        def move(self, move, element, points, screen, screen_colour, display):
-             
+        def move(self, move, element, bump_element, points, screen, screen_colour, display, my_font, other_player):
+            
             # Override old position
             old_grid_point = GUI.GridPoint(self.x, self.y, GUI.GREY)
             old_x = self.x
@@ -129,23 +172,79 @@ class GUI():
             self.x = move[0]
             self.y = move[1]
             self.element = element
-             
-            # Override grid points back to normal colour and old player position
-            pygame.draw.circle(screen, screen_colour, (old_x, old_y), self.radius)
-            old_position.draw(screen)
-             
-            points.draw(screen)
-            pygame.draw.circle(screen, self.colour, (self.x, self.y), self.radius)
+            
+            # If move is a bump
+            if bump_element:
+                
+                # Override grid points back to normal colour and old player position
+                pygame.draw.circle(screen, screen_colour, (old_x, old_y), self.radius)
+                old_position.draw(screen)
+                 
+                points.draw(screen)
+                pygame.draw.circle(screen, self.colour, (self.x, self.y), self.radius - 2)
+                
+                # Draw notification box
+                bump_inside_box = pygame.Rect(30, 430, 215, 190)
+                pygame.draw.rect(screen, screen_colour, bump_inside_box)
+                
+                # If red is bumping, blue text on top
+                if self.player1:
+                    blue_pos = (87, 455)
+                    red_pos = (95, 555)
+                
+                # If blue is bumping, red text on top
+                else:
+                    red_pos = (95, 455)
+                    blue_pos = (87, 555)
+                
+                # Display message
+                colour_font = pygame.font.SysFont('Calibri', 48)
+                red_surface = colour_font.render('RED', True, GUI.RED)
+                blue_surface = colour_font.render('BLUE', True, GUI.BLUE)
+                is_hidden_surface = my_font.render('is bumped under', True, GUI.GREY)
+                
+                screen.blit(is_hidden_surface, (60, 515))
+                screen.blit(red_surface, red_pos)
+                screen.blit(blue_surface, blue_pos)
+                
+                # Other player is now bumped
+                other_player.is_bumped = True
+            
+            # If coming out of a bump
+            elif self.is_bumped:
+                
+                # Override grid points back to normal colour and old player position
+                pygame.draw.circle(screen, other_player.colour, (old_x, old_y), other_player.radius)
+                 
+                points.draw(screen)
+                pygame.draw.circle(screen, self.colour, (self.x, self.y), self.radius)
+                
+                # Remove notification box
+                bump_outside_box = pygame.Rect(25, 425, 225, 200)
+                pygame.draw.rect(screen, screen_colour, bump_outside_box)
+                
+                # Not bumped anymore
+                self.is_bumped = False
+                
+            # Move is not related to a bump
+            else:
+                
+                # Override grid points back to normal colour and old player position
+                pygame.draw.circle(screen, screen_colour, (old_x, old_y), self.radius)
+                old_position.draw(screen)
+                 
+                points.draw(screen)
+                pygame.draw.circle(screen, self.colour, (self.x, self.y), self.radius)
              
             # Update display
             display.update()
             
-        def haveTurn(self, other_player, policy_table, current_turn, npoints_x, npoints_y, grid_margin_x, grid_margin_y, coords, screen, screen_colour, display):
+        def haveTurn(self, other_player, policy_table, current_turn, npoints_x, npoints_y, grid_margin_x, grid_margin_y, coords, screen, screen_colour, my_font, display):
             
             # Show available moves
-            possible_moves, move_element, base_grid_points = self.availableMoves(npoints_x, npoints_y, coords, screen, display, other_player)
+            possible_moves, move_element, bump_element, base_grid_points = self.availableMoves(npoints_x, npoints_y, coords, screen, screen_colour, display, my_font, other_player)
             
-            # If not a player
+            # If not a person
             if self.policy:
                 
                 # Show possible moves before moving (delay in milliseconds)
@@ -184,7 +283,7 @@ class GUI():
                     self.turn_history.append((self.x, self.y))
                     
                     # Move based on maximum policy value
-                    self.move(possible_moves[element], move_element[element], base_grid_points, screen, screen_colour, display)
+                    self.move(possible_moves[element], move_element[element], (element == bump_element), base_grid_points, screen, screen_colour, display, my_font, other_player)
             
                 # If this is player 2
                 else:
@@ -212,13 +311,13 @@ class GUI():
                     self.turn_history.append((self.x, self.y))
                     
                     # Move based on maximum policy value
-                    self.move(possible_moves[element], move_element[element], base_grid_points, screen, screen_colour, display)
+                    self.move(possible_moves[element], move_element[element], (element == bump_element), base_grid_points, screen, screen_colour, display, my_font, other_player)
                 
                 # End turn
                 self.Turn = False
                 other_player.Turn = True
                 
-            # If a player
+            # If a person
             else:
                 
                 # When user click is within area of available move, perform move
@@ -239,7 +338,7 @@ class GUI():
                          
                         # Move player to selected position (if a position has been selected)
                         if (index != -1):
-                            self.move(possible_moves[index], move_element[index], base_grid_points, screen, screen_colour, display)
+                            self.move(possible_moves[index], move_element[index], (index == bump_element), base_grid_points, screen, screen_colour, display, my_font, other_player)
                          
                             # End turn
                             self.Turn = False
@@ -448,11 +547,11 @@ class GUI():
             
             # Player 1's turn
             while self.p1.Turn:
-                self.p1.haveTurn(self.p2, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin_x, self.grid_margin_y, self.coords, self.screen, self.screen_colour, pygame.display)
+                self.p1.haveTurn(self.p2, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin_x, self.grid_margin_y, self.coords, self.screen, self.screen_colour, self.my_font, pygame.display)
                 
             # Player 2's turn
             while self.p2.Turn:
-                self.p2.haveTurn(self.p1, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin_x, self.grid_margin_y, self.coords, self.screen, self.screen_colour, pygame.display)
+                self.p2.haveTurn(self.p1, self.policy.table, self.current_turn, self.npoints_x, self.npoints_y, self.grid_margin_x, self.grid_margin_y, self.coords, self.screen, self.screen_colour, self.my_font, pygame.display)
                 
             # Number of turns remaining decrements
             self.current_turn -= 1
@@ -499,14 +598,14 @@ class GUI():
         self.score_text_pos = (62, 380)
         
         # Player 1 wins
-        if (game_score == -1):
+        if (game_score <= -1):
             red_surface = self.score_font.render('RED', True, GUI.RED)
             wins_surface = self.score_font.render('WINS!', True, GUI.GREY)
             self.screen.blit(red_surface, (self.score_text_pos[0] + 18, self.score_text_pos[1]))
             self.screen.blit(wins_surface, (self.score_text_pos[0] - 14, self.score_text_pos[1] + 70))
         
         # Player 2 wins
-        elif (game_score == 1):
+        elif (game_score >= 1):
             blue_surface = self.score_font.render('BLUE', True, GUI.BLUE)
             wins_surface = self.score_font.render('WINS!', True, GUI.GREY)
             self.screen.blit(blue_surface, self.score_text_pos)
@@ -606,4 +705,4 @@ class GUI():
 
 
 # Create GUI object
-gameGUI = GUI(11, 7, (0, 3), (0, 7), 1) # xpoints, ypoints, p1_start, p2_start, maxturns
+gameGUI = GUI(11, 7, (0, 3), (0, 7), 10) # xpoints, ypoints, p1_start, p2_start, maxturns
