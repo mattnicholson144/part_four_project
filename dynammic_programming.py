@@ -96,6 +96,9 @@ def value_function(i, j, k, l, I, J, K, L,depth, iORk):
         moveValues = np.array([])
         
         for a in possible_moves:
+            print(a)
+#            print(a[0])
+#            print(possible_moves[a][0])
             moveValues[a] = value_function(possible_moves[a][0], possible_moves[a][1], possible_moves[a][2], possible_moves[a][3], I, J, depth-1, iORk)[0]
             
         index = np.argmax(moveValues)

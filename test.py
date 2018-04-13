@@ -705,4 +705,5 @@ class GUI():
 
 
 # Create GUI object
-gameGUI = GUI(11, 7, (0, 3), (0, 7), 10) # xpoints, ypoints, p1_start, p2_start, maxturns
+gameGUI = GUI(11, 7, (0, 3), (0, 7), 10) # xpoints, ypoints, p1_start, p2_start, maxturns, where p1 starts, p1 is red
+
