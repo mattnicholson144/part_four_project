@@ -248,7 +248,7 @@ class GUI():
             if self.policy:
                 
                 # Show possible moves before moving (delay in milliseconds)
-                pygame.time.delay(1000)
+                pygame.time.delay(2000)
                 
                 # Normalise coordinates
                 min_x = coords[0][0]
@@ -695,15 +695,6 @@ class GUI():
         self.endGame()
 # ==========================================================================================
 
-
-
-
-
-
-
-
-
-
 # Create GUI object
-gameGUI = GUI(11, 7, (0, 3), (0, 7), 10) # xpoints, ypoints, p1_start, p2_start, maxturns, where p1 starts, p1 is red
+gameGUI = GUI(5, 5, (0, 0), (0, 4), 10) # xpoints, ypoints, p1_start, p2_start, maxturns, where p1 starts, p1 is red
 
